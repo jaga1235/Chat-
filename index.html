@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BigWinner Chat</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+
+<h2>BigWinner Login</h2>
+
+<input id="password" type="password" placeholder="Enter password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+
+<!-- USER CHAT -->
+<div id="userPanel" class="hidden">
+
+<h2>User Chat</h2>
+
+<div id="userChatBox"></div>
+
+<input id="userMessage" placeholder="Type message">
+
+<button onclick="sendUserMessage()">Send</button>
+
+</div>
+
+
+
+<!-- AGENT PANEL -->
+<div id="agentPanel" class="hidden">
+
+<div class="agentContainer">
+
+<div class="userList">
+
+<h3>Users</h3>
+
+<ul id="users"></ul>
+
+</div>
+
+
+<div class="chatArea">
+
+<h3 id="chatUser">Select User</h3>
+
+<div id="agentChatBox"></div>
+
+<input id="agentMessage" placeholder="Type reply">
+
+<button onclick="sendAgentMessage()">Send</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script type="module">
+
+// FIREBASE IMPORTS
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+// FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyAXqO23ggcNB_btxIEMJDPHOSM1OGdG4oc",
+  authDomain: "big-winner-91782.firebaseapp.com",
+  databaseURL: "https://big-winner-91782-default-rtdb.firebaseio.com",
+  projectId: "big-winner-91782",
+  storageBucket: "big-winner-91782.firebasestorage.app",
+  messagingSenderId: "1088925682784",
+  appId: "1:1088925682784:web:69462cd6a702422ebb0705",
+  measurementId: "G-L5Z6VY870S"
+};
+
+
+// INIT FIREBASE
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+let currentUser = "";
+let selectedUser = "";
+
+
+// LOGIN SYSTEM
+window.login = function(){
+
+let pass = document.getElementById("password").value;
+
+if(pass === "845600"){
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("agentPanel").style.display="block";
+
+loadUsers();
+
+}
+else{
+
+currentUser = pass;
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("userPanel").style.display="block";
+
+loadUserChat();
+
+}
+
+}
+
+
+
+// USER SEND MESSAGE
+window.sendUserMessage = function(){
+
+let msg = document.getElementById("userMessage").value;
+
+push(ref(db,"chats/"+currentUser),{
+
+sender:"user",
+text:msg,
+time:Date.now()
+
+});
+
+document.getElementById("userMessage").value="";
+
+}
+
+
+
+// LOAD USER CHAT
+function loadUserChat(){
+
+onValue(ref(db,"chats/"+currentUser),(snapshot)=>{
+
+let box = document.getElementById("userChatBox");
+
+box.innerHTML="";
+
+snapshot.forEach((data)=>{
+
+let m=data.val();
+
+let div=document.createElement("div");
+
+div.innerText=m.text;
+
+box.appendChild(div);
+
+});
+
+});
+
+}
+
+
+
+// LOAD USER LIST
+function loadUsers(){
+
+onValue(ref(db,"chats"),(snapshot)=>{
+
+let list=document.getElementById("users");
+
+list.innerHTML="";
+
+snapshot.forEach((user)=>{
+
+let li=document.createElement("li");
+
+li.innerText=user.key;
+
+li.onclick=()=>openChat(user.key);
+
+list.appendChild(li);
+
+});
+
+});
+
+}
+
+
+
+// OPEN USER CHAT
+function openChat(user){
+
+selectedUser=user;
+
+document.getElementById("chatUser").innerText=user;
+
+onValue(ref(db,"chats/"+user),(snapshot)=>{
+
+let box=document.getElementById("agentChatBox");
+
+box.innerHTML="";
+
+snapshot.forEach((data)=>{
+
+let m=data.val();
+
+let div=document.createElement("div");
+
+div.innerText=m.sender+" : "+m.text;
+
+box.appendChild(div);
+
+});
+
+});
+
+}
+
+
+
+// AGENT SEND MESSAGE
+window.sendAgentMessage=function(){
+
+let msg=document.getElementById("agentMessage").value;
+
+push(ref(db,"chats/"+selectedUser),{
+
+sender:"agent",
+text:msg,
+time:Date.now()
+
+});
+
+document.getElementById("agentMessage").value="";
+
+}
+
+</script>
+
+</body>
+</html>
